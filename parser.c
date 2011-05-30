@@ -10,6 +10,8 @@ static int precedence(int op) {
   switch(op) {
     case KL_UADD:
     case KL_USUB:
+    case KL_BITNOT:
+    case KL_LOGNOT:
       return 1;
     case KL_MUL:
     case KL_DIV:
@@ -27,15 +29,18 @@ static int precedence(int op) {
     case KL_BITAND:
     case KL_BITOR:
     case KL_BITXOR:
-    case KL_BITNOT:
       return 5;
     case KL_CMP:
+    case KL_NEQ:
     case KL_EQ:
     case KL_LT:
     case KL_GT:
     case KL_LEQ:
     case KL_GEQ:
       return 6;
+    case KL_LOGAND:
+    case KL_LOGOR:
+      return 7;
   }
   return 0;
 }

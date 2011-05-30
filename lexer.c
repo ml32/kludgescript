@@ -151,10 +151,22 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
         s->last = KL_ASSIGN;
         return;
       case '&':
+        if (peek(s) == '&') {
+          next(s);
+          t->type = KL_LOGAND;
+          s->last = KL_LOGAND;
+          return;
+        }
         t->type = KL_BITAND;
         s->last = KL_BITAND;
         return;
       case '|':
+        if (peek(s) == '|') {
+          next(s);
+          t->type = KL_LOGOR;
+          s->last = KL_LOGOR;
+          return;
+        }
         t->type = KL_BITOR;
         s->last = KL_BITOR;
         return;
@@ -165,6 +177,16 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
       case '~':
         t->type = KL_BITNOT;
         s->last = KL_BITNOT;
+        return;
+      case '!':
+        if (peek(s) == '=') {
+          next(s);
+          t->type = KL_NEQ;
+          s->last = KL_NEQ;
+          return;
+        }
+        t->type = KL_LOGNOT;
+        s->last = KL_LOGNOT;
         return;
       case '(':
         t->type = KL_LPAREN;

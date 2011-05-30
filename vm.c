@@ -186,6 +186,77 @@ static inline kl_valref_t kl_vm_bitxor(kl_valref_t x, kl_valref_t y) {
   return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
 }
 
+static inline kl_valref_t kl_vm_bitnot(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = ~x.val.num };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_logand(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num && y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_logor(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num || y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_lognot(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(!x.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+
+static inline kl_valref_t kl_vm_eq(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num == y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_neq(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num != y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_lt(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num < y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_gt(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num > y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_leq(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num <= y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_geq(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num >= y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
 #define KL_VM_BINOP(func) \
   x = kl_vm_stack_pop(vm);\
   y = kl_vm_stack_pop(vm);\
@@ -249,6 +320,38 @@ void kl_vm_exec(kl_vm_t* vm, kl_code_t* code) {
       case KL_BITXOR:
         KL_VM_BINOP(kl_vm_bitxor)
         break;
+      case KL_BITNOT:
+        KL_VM_UNOP(kl_vm_bitnot)
+        break;
+      case KL_LOGAND:
+        KL_VM_BINOP(kl_vm_logand)
+        break;
+      case KL_LOGOR:
+        KL_VM_BINOP(kl_vm_logor)
+        break;
+      case KL_LOGNOT:
+        KL_VM_UNOP(kl_vm_lognot)
+        break;
+
+      case KL_EQ:
+        KL_VM_BINOP(kl_vm_eq)
+        break;
+      case KL_NEQ:
+        KL_VM_BINOP(kl_vm_neq)
+        break;
+      case KL_LT:
+        KL_VM_BINOP(kl_vm_lt)
+        break;
+      case KL_GT:
+        KL_VM_BINOP(kl_vm_gt)
+        break;
+      case KL_LEQ:
+        KL_VM_BINOP(kl_vm_leq)
+        break;
+      case KL_GEQ:
+        KL_VM_BINOP(kl_vm_geq)
+        break;
+
       case KL_PUSH:
         kl_vm_stack_push(vm, ins->arg);
         break;

@@ -38,7 +38,7 @@
 #define KL_BITAND KL_BINOP(0x2A) /* & */
 #define KL_BITOR  KL_BINOP(0x2B) /* | */
 #define KL_BITXOR KL_BINOP(0x2C) /* ^ */
-#define KL_BITNOT 0x2D /* ~ */
+#define KL_BITNOT KL_UNOP(0x2D)  /* ~ */
 
 /* lexer->parser */
 #define KL_LPAREN KL_GROUP(0x40) /* ( */
@@ -46,11 +46,15 @@
 
 /* lexer->parser->compiler->opcodes */
 #define KL_CMP    KL_BINOP(0x50) /* <=> (ruby style general comparison operator) */
-#define KL_EQ     KL_BINOP(0x51)
-#define KL_LT     KL_BINOP(0x52)
-#define KL_GT     KL_BINOP(0x53)
-#define KL_LEQ    KL_BINOP(0x54)
-#define KL_GEQ    KL_BINOP(0x55)
+#define KL_NEQ    KL_BINOP(0x51) /* != */
+#define KL_EQ     KL_BINOP(0x52) /* == */
+#define KL_LT     KL_BINOP(0x53) /* < */
+#define KL_GT     KL_BINOP(0x54) /* > */
+#define KL_LEQ    KL_BINOP(0x55) /* <= */
+#define KL_GEQ    KL_BINOP(0x56) /* >= */
+#define KL_LOGAND KL_BINOP(0x57) /* && */
+#define KL_LOGOR  KL_BINOP(0x58) /* || */
+#define KL_LOGNOT KL_UNOP(0x59)  /* ! */
 
 /* lexer->parser->compiler */
 #define KL_ASSIGN 0x60

@@ -15,8 +15,8 @@ typedef struct kl_lexer {
   int last; /* type of last token */
 } kl_lexer_t;
 
-#define LEX_TOKEN_SIZE   0x0100
-#define LEX_TOKEN_STRLEN 0x00FC
+#define KL_TOKEN_SIZE   0x0100
+#define KL_TOKEN_STRLEN 0x00FC
 typedef struct kl_token {
   int type;
   int line;
@@ -24,13 +24,13 @@ typedef struct kl_token {
 
 typedef struct kl_token_generic {
   kl_token_t token;
-  uint8_t bytes[LEX_TOKEN_SIZE];
+  uint8_t bytes[KL_TOKEN_SIZE];
 } kl_token_generic_t;
 
 typedef struct kl_token_str {
   kl_token_t token;
   int32_t n;
-  char    str[];
+  char    str[KL_TOKEN_STRLEN];
 } kl_token_str_t;
 
 typedef struct kl_token_num {

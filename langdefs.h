@@ -15,12 +15,20 @@
 #define KL_FLAG_GROUP 0x0400
 #define KL_GROUP(x) \
   ((x) | KL_FLAG_GROUP)
+/* variables */
+#define KL_FLAG_VAR 0x0800
+#define KL_VARIABLE(x) \
+  ((x) | KL_FLAG_VAR)
 
 #define KL_NONE     -1
-#define KL_LABEL  0x01
-#define KL_NUMBER 0x02
-#define KL_PRINT  0x03 /* print */
-#define KL_END    0x04 /* ; */
+#define KL_LOCAL    KL_VARIABLE(0x01)
+#define KL_GLOBAL   KL_VARIABLE(0x02)
+#define KL_INSTVAR  KL_VARIABLE(0x03)
+#define KL_CLASSVAR KL_VARIABLE(0x04)
+#define KL_NUMBER   0x05
+#define KL_BLOCK    0x06 /* parser->compiler */
+#define KL_END      0x07 /* ; */
+#define KL_PRINT    0x08 /* print */
 
 /* lexer->parser->compiler->opcodes */
 #define KL_ADD    KL_BINOP(0x20) /* + */
@@ -39,6 +47,9 @@
 #define KL_BITOR  KL_BINOP(0x2B) /* | */
 #define KL_BITXOR KL_BINOP(0x2C) /* ^ */
 #define KL_BITNOT KL_UNOP(0x2D)  /* ~ */
+
+#define KL_SINE   KL_UNOP(0x30)
+#define KL_COSINE KL_UNOP(0x31)
 
 /* lexer->parser */
 #define KL_LPAREN KL_GROUP(0x40) /* ( */
@@ -61,5 +72,7 @@
 
 /* compiler->opcode */
 #define KL_PUSH 0x80
+
+char* kl_langdef_name(int value);
 
 #endif /* KL_LANGDEFS_H */

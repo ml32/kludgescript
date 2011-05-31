@@ -16,6 +16,7 @@
 #define ISALPHANUM(c)\
   (ISALPHA(c) || ISDECIMAL(c))
 
+static void kl_lexer_alphanum(kl_lexer_t *source, char* buf, int *n, int max);
 static void kl_lexer_number(kl_lexer_t *source, kl_token_num_t *token, char* buf, int n);
 static int  kl_lexer_keyword(char *buf, int n);
 static void kl_lexer_error(char *msg);
@@ -57,7 +58,7 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
         s->last = KL_END;
         return;
       case '+':
-        if (s->last == KL_NUMBER || s->last == KL_LABEL || s->last == KL_RPAREN) {
+        if (s->last == KL_NUMBER || s->last & KL_FLAG_VAR || s->last == KL_RPAREN) {
           t->type = KL_ADD;
           s->last = KL_ADD;
           return;
@@ -66,7 +67,7 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
         s->last = KL_UADD;
         return;
       case '-':
-        if (s->last == KL_NUMBER || s->last == KL_LABEL || s->last == KL_RPAREN) {
+        if (s->last == KL_NUMBER || s->last & KL_FLAG_VAR || s->last == KL_RPAREN) {
           t->type = KL_SUB;
           s->last = KL_SUB;
           return;
@@ -198,34 +199,26 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
         return;
       default:
         if (ISALPHA(c)) {
-          for (int i=0; i<KL_LEXER_BUFSIZE; i++) {
-            buf[i] = c;
-            if (!ISALPHANUM(peek(s))) {
-              int n  = i + 1;
+          buf[0] = c;
+          int n  = 1;
+          kl_lexer_alphanum(s, buf, &n, KL_LEXER_BUFSIZE);
 
-              int kw = kl_lexer_keyword(buf, n);
-              if (kw != KL_NONE) {
-                t->type = kw;
-                s->last = kw;
-                return;
-              }
-
-              if (n > LEX_TOKEN_STRLEN) {
-                s->error("Variable name exceeds maximum length!");
-                return;
-              }
-
-              kl_token_str_t* stoken = (kl_token_str_t*)token;
-              stoken->token.type = KL_LABEL;
-              stoken->n          = n;
-              memcpy(stoken->str, buf, n);
-
-              s->last = KL_LABEL;
-              return;
-            }
-            c = peek(s); next(s);
+          int kw = kl_lexer_keyword(buf, n);
+          if (kw != KL_NONE) {
+            t->type = kw;
+            s->last = kw;
+            return;
           }
-          s->error("Variable name exceeds maximum length!");
+
+          kl_token_str_t* stoken = (kl_token_str_t*)token;
+          if (n > KL_TOKEN_STRLEN) {
+            s->error("Variable name exceeds maximum length!");
+            return;
+          }
+          stoken->token.type = KL_LOCAL;
+          memcpy(stoken->str, buf, n);
+
+          s->last            = KL_LOCAL;
           return;
         }
 
@@ -240,7 +233,22 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
   }
 }
 
-/* reads and parses a numeric value -- partial number string (up to decimal) may be loaded into buf */
+/* continues reading a string of alphanumeric characters */
+static void kl_lexer_alphanum(kl_lexer_t *source, char* buf, int *n, int max) {
+  int c;
+  for (int i=*n; i < max; i++) {
+    c = peek(source);
+    if (!(ISALPHANUM(c) || c == '_')) {
+      *n = i;
+      return;
+    }
+    buf[i] = c;
+    next(source);
+  }
+  source->error("Label exceeds maximum length!");
+}
+
+/* continues reading and parses a numeric value -- partial number string (up to decimal) may be loaded into buf */
 static void kl_lexer_number(kl_lexer_t *source, kl_token_num_t *token, char* buf, int n) {
   int c;
   kl_number_t number;
@@ -273,6 +281,8 @@ static void kl_lexer_number(kl_lexer_t *source, kl_token_num_t *token, char* buf
 
 static int kl_lexer_keyword(char *buf, int n) {
   if (strncmp(buf, "print", n) == 0) { return KL_PRINT; }
+  if (strncmp(buf, "sin", n) == 0) { return KL_SINE; }
+  if (strncmp(buf, "cos", n) == 0) { return KL_COSINE; }
   return KL_NONE;
 }
 static void kl_lexer_error(char *msg) {

@@ -29,11 +29,12 @@ typedef struct kl_code {
 
 typedef struct kl_vm {
   int         sp;
+  int         fp;
   kl_valref_t stack[KL_VM_STACKSIZE];
 } kl_vm_t;
 
 #define KL_VM_INITIALIZER \
-  { .sp = 0 }
+  { .sp = -1 }
 
 static inline void kl_vm_init(kl_vm_t* vm) {
   vm->sp = 0;

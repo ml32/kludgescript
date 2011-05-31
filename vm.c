@@ -50,7 +50,7 @@ static void kl_vm_compile_recursive(list_t* istack, kl_expression_t* root) {
 }
 
 kl_code_t* kl_vm_compile(kl_expression_t* root) {
-  list_t istack;
+  list_t istack = LIST_INITIALIZER;
   kl_vm_compile_recursive(&istack, root);
   int n = list_count(&istack);
 
@@ -60,26 +60,42 @@ kl_code_t* kl_vm_compile(kl_expression_t* root) {
   code->n = n;
 
   kl_ins_t *ins; int i = 0;
+  printf("Code:\n");
   while ((ins = list_pop(&istack)) != NULL) {
+    if (ins->arg.ns == KL_NS_IMMEDIATE) {
+      printf("\t%d: %s %f\n", i, kl_langdef_name(ins->op), kl_numtofloat(ins->arg.val.num));
+    } else {
+      printf("\t%d: %s %d:%d\n", i, kl_langdef_name(ins->op), ins->arg.ns, ins->arg.val.ref);
+    }
+
     kl_ins_copy(ins, code->ins + i);
-    i++;
+    free(ins);
+    ++i;
   }
 
   return code;
 }
 
+
+
 static inline void kl_vm_stack_push(kl_vm_t* vm, kl_valref_t valref) {
-  int sp = vm->sp;
-  ++vm->sp;
+  int sp = ++vm->sp;
   assert(sp < KL_VM_STACKSIZE);
   vm->stack[sp] = valref;
 }
 
 static inline kl_valref_t kl_vm_stack_pop(kl_vm_t* vm) {
-  int sp = --vm->sp;
+  int sp = vm->sp;
   assert(sp >= 0);
+  --vm->sp;
   return vm->stack[sp];
 }
+
+static inline kl_valref_t kl_vm_stack_peek(kl_vm_t* vm) {
+  return vm->stack[vm->sp];
+}
+
+
 
 static inline kl_valref_t kl_vm_add(kl_valref_t x, kl_valref_t y) {
   if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
@@ -215,6 +231,21 @@ static inline kl_valref_t kl_vm_lognot(kl_valref_t x) {
 }
 
 
+static inline kl_valref_t kl_vm_sin(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_num_sin(x.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_cos(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_num_cos(x.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+
 static inline kl_valref_t kl_vm_eq(kl_valref_t x, kl_valref_t y) {
   if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
     return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num == y.val.num) };
@@ -331,6 +362,13 @@ void kl_vm_exec(kl_vm_t* vm, kl_code_t* code) {
         break;
       case KL_LOGNOT:
         KL_VM_UNOP(kl_vm_lognot)
+        break;
+
+      case KL_SINE:
+        KL_VM_UNOP(kl_vm_sin)
+        break;
+      case KL_COSINE:
+        KL_VM_UNOP(kl_vm_cos)
         break;
 
       case KL_EQ:

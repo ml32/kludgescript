@@ -32,7 +32,17 @@ typedef struct kl_expr_unop {
   struct kl_expression* arg;
 } kl_expr_unop_t;
 
-int kl_parse(kl_lexer_t* source);
+typedef struct kl_expr_print {
+  kl_expression_t expr;
+  struct kl_expression* arg;
+} kl_expr_print_t;
+
+typedef struct kl_expr_block {
+  kl_expression_t expr;
+  list_t          list;
+} kl_expr_block_t;
+
+kl_expression_t* kl_parse(kl_lexer_t* source);
 kl_expression_t* kl_build_expr(kl_lexer_t* source);
 kl_expression_t* kl_parse_expr(list_t* list);
 void kl_expr_free(kl_expression_t *expr);

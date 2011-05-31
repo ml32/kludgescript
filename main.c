@@ -15,7 +15,8 @@ static int read() {
 static kl_vm_t vm = KL_VM_INITIALIZER;
 
 static inline kl_valref_t kl_vm_stack_pop(kl_vm_t* vm) {
-  int sp = --vm->sp;
+  int sp = vm->sp;
+  --vm->sp;
   return vm->stack[sp];
 }
 
@@ -49,9 +50,10 @@ int main() {
   kl_expression_t* expr;
   kl_code_t*       code;
   for (;;) {
-    expr = kl_build_expr(&source);
+    expr = kl_parse(&source);
     code = kl_vm_compile(expr);
     kl_vm_exec(&vm, code);
+    printf("sp: %d\n", vm.sp);
 
     kl_valref_t val = kl_vm_stack_pop(&vm);
     printf("result: %f\n", kl_numtofloat(val.val.num));

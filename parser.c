@@ -12,6 +12,8 @@ static int precedence(int op) {
     case KL_USUB:
     case KL_BITNOT:
     case KL_LOGNOT:
+    case KL_SINE:
+    case KL_COSINE:
       return 1;
     case KL_MUL:
     case KL_DIV:
@@ -48,24 +50,89 @@ static int precedence(int op) {
 static kl_expression_t* kl_expr_from_token(kl_token_t *token);
 static int kl_expr_iscomplete(kl_expression_t* expr);
 static void kl_parse_error(char *msg, int lineno);
+static int kl_build_expr_list(kl_lexer_t* source, list_t* elist);
 
-
-
-kl_expression_t* kl_build_expr(kl_lexer_t* source) {
+kl_expression_t* kl_parse(kl_lexer_t* source) {
+  /*
   list_t elist = LIST_INITIALIZER;
 
+  kl_expr_block_t* block = (kl_expr_block_t*) malloc(sizeof(kl_expr_block_t));
+  block->expr.type = KL_BLOCK;
+  block->expr.line = source->line;
+  block->list = LIST_INITIALIZER;
+
   kl_token_generic_t token;
+  kl_expression_t*   expr;
   for (;;) {
     kl_lexer_next(source, &token);
-    if (token.token.type == KL_NONE || token.token.type == KL_END) break;
+    if (token.token.type == KL_NONE) break;
+    if (token.token.type == KL_PRINT) {
+      kl_expr_print_t* pexpr = (kl_expr_print_t*)kl_expr_from_token((kl_token_t*)&token);
 
-    kl_expression_t* expr = kl_expr_from_token(&token.token);
-    if (expr == NULL) continue; /* TODO: print some type of warning?? */
+      if (kl_build_expr_list(source, &elist) < 0) {
+        list_clear(&elist, (list_dealloc_cb)&kl_expr_free);
+        kl_expr_free((kl_expression_t*)block);
+        return NULL;
+      }
 
-    list_insert_after(&elist, list_last(&elist), expr);
+      expr = kl_parse_expr(&elist);
+      if (expr == NULL) {
+        list_clear(&elist, (list_dealloc_cb)&kl_expr_free);
+        kl_expr_free((kl_expression_t*)block);
+        return NULL;
+      }
+
+      pexpr->arg = expr;
+
+      list_insert_after(&block->list, list_last(&block->list), expr);
+    } else {
+      expr = kl_expr_from_token((kl_token_t*)&token);
+      list_push(&elist, expr);
+      if (kl_build_expr_list(source, &elist) < 0) {
+        list_clear(&elist, (list_dealloc_cb)&kl_expr_free);
+        kl_expr_free((kl_expression_t*)block);
+        return NULL;
+      }
+
+      expr = kl_parse_expr(&elist);
+      if (expr == NULL) {
+        list_clear(&elist, (list_dealloc_cb)&kl_expr_free);
+        kl_expr_free((kl_expression_t*)block);
+        return NULL;
+      }
+
+      list_insert_after(&block->list, list_last(&block->list), expr);
+    }
   }
 
   return kl_parse_expr(&elist);
+  */
+
+  list_t elist = LIST_INITIALIZER;
+  kl_build_expr_list(source, &elist);
+  return kl_parse_expr(&elist);
+}
+
+static int kl_build_expr_list(kl_lexer_t* source, list_t* elist) {
+  kl_token_generic_t token;
+  kl_expression_t*   expr;
+  for (;;) {
+    kl_lexer_next(source, &token);
+    if (token.token.type == KL_NONE) {
+      kl_parse_error("Invalid token or unexpected EOF", token.token.line);
+      return -1;
+    }
+    if (token.token.type == KL_END) break;
+
+    expr = kl_expr_from_token(&token.token);
+    if (expr == NULL) {
+      kl_parse_error("Expression contains unrecognised token", token.token.line);
+      return -1;
+    }
+
+    list_insert_after(elist, list_last(elist), expr);
+  }
+  return 0;
 }
 
 kl_expression_t* kl_parse_expr(list_t* list) {
@@ -98,6 +165,10 @@ kl_expression_t* kl_parse_expr(list_t* list) {
   /* misc operands */
   if (expr == NULL) {
     expr = list_pop(list);
+    if (expr == NULL) {
+      kl_parse_error("Missing operand or empty expression", expr->line);
+      return NULL;
+    }
     if (!list_isempty(list)) {
       kl_parse_error("Excess operands", expr->line);
       list_clear(list, (list_dealloc_cb)&kl_expr_free);
@@ -244,6 +315,14 @@ void kl_expr_free(kl_expression_t *expr) {
     kl_expr_unop_t* uexpr = (kl_expr_unop_t*)expr;
     kl_expr_free(uexpr->arg);
   }
+  if (expr->type == KL_PRINT) {
+    kl_expr_print_t* pexpr = (kl_expr_print_t*)expr;
+    free(pexpr->arg);
+  }
+  if (expr->type == KL_BLOCK) {
+    kl_expr_block_t* blexpr = (kl_expr_block_t*)expr;
+    list_clear(&blexpr->list, (list_dealloc_cb)&kl_expr_free);
+  }
   free(expr);
 }
 
@@ -271,7 +350,18 @@ static kl_expression_t* kl_expr_from_token(kl_token_t *token) {
     return (kl_expression_t*)uexpr;
   }
 
-  if (token->type == KL_LABEL) {
+  if (token->type == KL_PRINT) {
+    kl_expr_print_t* pexpr = (kl_expr_print_t*) malloc(sizeof(kl_expr_print_t));
+
+    pexpr->expr.type = token->type;
+    pexpr->expr.line = token->line;
+
+    pexpr->arg = NULL;
+
+    return (kl_expression_t*)pexpr;
+  }
+
+  if (token->type & KL_FLAG_VAR) {
     kl_token_str_t* stoken = (kl_token_str_t*)token;
     int n = stoken->n;
 

@@ -2,8 +2,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "trigtable.h"
+
+/* FIXME: detect overflow in conversions */
 
 kl_number_t kl_strtoinum(char *str, int n) {
   kl_number_t result = kl_inttonum(0);
@@ -14,7 +17,7 @@ kl_number_t kl_strtoinum(char *str, int n) {
   int digit;
   for (int i=n-1; i>=start; i--) {
     digit   = str[i] - '0';
-    if (digit < 0 || digit > 9) { return 0; }
+    assert(digit >= 0 && digit <= 9);
     result += kl_num_mul(kl_inttonum(digit), value);
     value   = kl_num_mul(value, kl_inttonum(10));
   }
@@ -23,27 +26,27 @@ kl_number_t kl_strtoinum(char *str, int n) {
 
   return result;
 }
+
 kl_number_t kl_strtofnum(char *str, int n) {
   kl_number_t result  = kl_inttonum(0);
   kl_number_t divisor = kl_inttonum(10);
   int      digit;
   for (int i=0; i<n; i++) {
     digit   = str[i] - '0';
-    if (digit < 0 || digit > 9) { return 0; }
+    assert(digit >= 0 && digit <= 9);
     result += kl_num_div(kl_inttonum(digit), divisor);
     divisor = kl_num_mul(divisor, kl_inttonum(10));
   }
   return result;
 }
+
 kl_number_t kl_strtonum(char *str, int n) {
   int decimal = -1;
   for (int i=0; i<n; i++) {
     char c = str[i];
     if (c == '.') {
       decimal = i;
-    } else if (c < '0' || c > '9') {
-      return 01;
-    }
+    } else assert(c >= '0' && c <= '9');
   }
   if (decimal < 1) {
     return kl_strtoinum(str, n);

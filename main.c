@@ -5,7 +5,7 @@
 #include "number.h"
 
 #include "lexer.h"
-#include "parser.h"
+#include "compiler.h"
 #include "vm.h"
 
 static int read() {
@@ -47,18 +47,16 @@ int main() {
 
   kl_lexer_init(&source, read, NULL);
 
-  kl_expression_t* expr;
   kl_code_t*       code;
   for (;;) {
-    expr = kl_parse(&source);
-    code = kl_vm_compile(expr);
+    code = kl_compile(&source);
+    kl_code_print(code);
     kl_vm_exec(&vm, code);
     printf("sp: %d\n", vm.sp);
 
     kl_valref_t val = kl_vm_stack_pop(&vm);
     printf("result: %f\n", kl_numtofloat(val.val.num));
 
-    kl_expr_free(expr);
     free(code);
   }
   return 0;

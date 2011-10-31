@@ -5,79 +5,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-static inline void kl_ins_copy(kl_ins_t *src, kl_ins_t *dst) {
-  dst->op  = src->op;
-  dst->arg = src->arg;
-}
-
-static void kl_vm_compile_recursive(list_t* istack, kl_expression_t* root) {
-  if (root==NULL) return;
-
-  kl_ins_t *ins;
-  if (root->type & KL_FLAG_BINOP) {
-    ins = (kl_ins_t*)malloc(sizeof(kl_ins_t));
-    ins->op  = root->type;
-    ins->arg.ns      = KL_NS_IMMEDIATE;
-    ins->arg.val.num = 0;
-    list_push(istack, ins);
-
-    kl_expr_binop_t* bexpr = (kl_expr_binop_t*)root;
-    kl_vm_compile_recursive(istack, bexpr->args[0]);
-    kl_vm_compile_recursive(istack, bexpr->args[1]);
-    return;
-  }
-  if (root->type & KL_FLAG_UNOP) {
-    ins = (kl_ins_t*)malloc(sizeof(kl_ins_t));
-    ins->op  = root->type;
-    ins->arg.ns      = KL_NS_IMMEDIATE;
-    ins->arg.val.num = 0;
-    list_push(istack, ins);
-
-    kl_expr_unop_t* uexpr = (kl_expr_unop_t*)root;
-    kl_vm_compile_recursive(istack, uexpr->arg);
-    return;
-  }
-  switch (root->type) {
-    case KL_NUMBER:
-      ins = (kl_ins_t*)malloc(sizeof(kl_ins_t));
-      kl_expr_imm_t* iexpr = (kl_expr_imm_t*)root;
-      ins->op          = KL_PUSH;
-      ins->arg.ns      = KL_NS_IMMEDIATE;
-      ins->arg.val.num = iexpr->val;
-      list_push(istack, ins);
-      return;
-  }
-}
-
-kl_code_t* kl_vm_compile(kl_expression_t* root) {
-  list_t istack = LIST_INITIALIZER;
-  kl_vm_compile_recursive(&istack, root);
-  int n = list_count(&istack);
-
-  int bytes = sizeof(kl_code_t) + n * sizeof(kl_ins_t);
-  kl_code_t* code = (kl_code_t*)malloc(bytes);
-
-  code->n = n;
-
-  kl_ins_t *ins; int i = 0;
-  printf("Code:\n");
-  while ((ins = list_pop(&istack)) != NULL) {
-    if (ins->arg.ns == KL_NS_IMMEDIATE) {
-      printf("\t%d: %s %f\n", i, kl_langdef_name(ins->op), kl_numtofloat(ins->arg.val.num));
-    } else {
-      printf("\t%d: %s %d:%d\n", i, kl_langdef_name(ins->op), ins->arg.ns, ins->arg.val.ref);
-    }
-
-    kl_ins_copy(ins, code->ins + i);
-    free(ins);
-    ++i;
-  }
-
-  return code;
-}
-
-
-
 static inline void kl_vm_stack_push(kl_vm_t* vm, kl_valref_t valref) {
   int sp = ++vm->sp;
   assert(sp < KL_VM_STACKSIZE);
@@ -94,7 +21,6 @@ static inline kl_valref_t kl_vm_stack_pop(kl_vm_t* vm) {
 static inline kl_valref_t kl_vm_stack_peek(kl_vm_t* vm) {
   return vm->stack[vm->sp];
 }
-
 
 
 static inline kl_valref_t kl_vm_add(kl_valref_t x, kl_valref_t y) {
@@ -289,8 +215,8 @@ static inline kl_valref_t kl_vm_geq(kl_valref_t x, kl_valref_t y) {
 }
 
 #define KL_VM_BINOP(func) \
-  x = kl_vm_stack_pop(vm);\
   y = kl_vm_stack_pop(vm);\
+  x = kl_vm_stack_pop(vm);\
   z = (func)(x, y);\
   kl_vm_stack_push(vm, z);
 

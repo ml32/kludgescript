@@ -11,6 +11,7 @@ typedef int32_t kl_number_t;
 #define KL_NUM_ONE    0x00010000
 #define KL_NUM_ZERO   0x00000000
 #define KL_NUM_HALF   0x00008000
+#define KL_NUM_TENTH  0x0000199A
 #define KL_NUM_PI     0x0003243F
 #define KL_NUM_HALFPI (KL_NUM_PI >> 1)
 

@@ -28,14 +28,14 @@ kl_number_t kl_strtoinum(char *str, int n) {
 }
 
 kl_number_t kl_strtofnum(char *str, int n) {
-  kl_number_t result  = kl_inttonum(0);
-  kl_number_t divisor = kl_inttonum(10);
-  int      digit;
+  kl_number_t result = kl_inttonum(0);
+  kl_number_t value  = KL_NUM_TENTH;
+  int digit;
   for (int i=0; i<n; i++) {
     digit   = str[i] - '0';
     assert(digit >= 0 && digit <= 9);
-    result += kl_num_div(kl_inttonum(digit), divisor);
-    divisor = kl_num_mul(divisor, kl_inttonum(10));
+    result += kl_num_mul(kl_inttonum(digit), value);
+    value   = kl_num_mul(value, KL_NUM_TENTH);
   }
   return result;
 }

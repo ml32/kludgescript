@@ -33,10 +33,10 @@ void kl_lexer_init(kl_lexer_t *source, kl_lexer_read_cb read, kl_lexer_err_cb er
 }
 
 #define KL_LEXER_BUFSIZE 0x0100
-void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
-  kl_token_t* t = &token->token;
-  t->type = KL_NONE;
-  t->line = s->line;
+void kl_lexer_next(kl_lexer_t *s, kl_token_t *token) {
+  kl_token_header_t* h = &token->header;
+  h->type = KL_NONE;
+  h->line = s->line;
 
   char c;
   char buf[KL_LEXER_BUFSIZE];
@@ -44,7 +44,7 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
     next(s);
     switch(c) {
       case '\x04': /* End of Transmission */
-        t->type = KL_NONE;
+        h->type = KL_NONE;
         s->last = KL_NONE;
         return;
       case '#':    /* single-line comment */
@@ -54,43 +54,43 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
         s->line++;
         break;
       case ';':
-        t->type = KL_END;
+        h->type = KL_END;
         s->last = KL_END;
         return;
       case '+':
         if (s->last == KL_NUMBER || s->last & KL_FLAG_VAR || s->last == KL_RPAREN) {
-          t->type = KL_ADD;
+          h->type = KL_ADD;
           s->last = KL_ADD;
           return;
         }
-        t->type = KL_UADD;
+        h->type = KL_UADD;
         s->last = KL_UADD;
         return;
       case '-':
         if (s->last == KL_NUMBER || s->last & KL_FLAG_VAR || s->last == KL_RPAREN) {
-          t->type = KL_SUB;
+          h->type = KL_SUB;
           s->last = KL_SUB;
           return;
         }
-        t->type = KL_USUB;
+        h->type = KL_USUB;
         s->last = KL_USUB;
         return;
       case '*':
-        t->type = KL_MUL;
+        h->type = KL_MUL;
         s->last = KL_MUL;
         return;
       case '/':
         if (peek(s) == '/') {
           next(s);
-          t->type = KL_FDIV;
+          h->type = KL_FDIV;
           s->last = KL_FDIV;
           return;
         }
-        t->type = KL_DIV;
+        h->type = KL_DIV;
         s->last = KL_DIV;
         return;
       case '%':
-        t->type = KL_MOD;
+        h->type = KL_MOD;
         s->last = KL_MOD;
         return;
       case '<':
@@ -98,26 +98,26 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
           next(s);
           if (peek(s) == '<') {
             next(s);
-            t->type = KL_ASHFTL;
+            h->type = KL_ASHFTL;
             s->last = KL_ASHFTL;
             return;
           }
-          t->type = KL_LSHFTL;
+          h->type = KL_LSHFTL;
           s->last = KL_LSHFTL;
           return;
         } else if (peek(s) == '=') {
           next(s);
           if (peek(s) == '>') {
             next(s);
-            t->type = KL_CMP;
+            h->type = KL_CMP;
             s->last = KL_CMP;
             return;
           }
-          t->type = KL_LEQ;
+          h->type = KL_LEQ;
           s->last = KL_LEQ;
           return;
         }
-        t->type = KL_LT;
+        h->type = KL_LT;
         s->last = KL_LT;
         return;
       case '>':
@@ -125,76 +125,76 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
           next(s);
           if (peek(s) == '>') {
             next(s);
-            t->type = KL_ASHFTR;
+            h->type = KL_ASHFTR;
             s->last = KL_ASHFTR;
             return;
           }
-          t->type = KL_LSHFTR;
+          h->type = KL_LSHFTR;
           s->last = KL_LSHFTR;
           return;
         } else if (peek(s) == '=') {
           next(s);
-          t->type = KL_GEQ;
+          h->type = KL_GEQ;
           s->last = KL_GEQ;
           return;
         }
-        t->type = KL_GT;
+        h->type = KL_GT;
         s->last = KL_GT;
         return;
       case '=':
         if (peek(s) == '=') {
           next(s);
-          t->type = KL_EQ;
+          h->type = KL_EQ;
           s->last = KL_EQ;
           return;
         }
-        t->type = KL_ASSIGN;
+        h->type = KL_ASSIGN;
         s->last = KL_ASSIGN;
         return;
       case '&':
         if (peek(s) == '&') {
           next(s);
-          t->type = KL_LOGAND;
+          h->type = KL_LOGAND;
           s->last = KL_LOGAND;
           return;
         }
-        t->type = KL_BITAND;
+        h->type = KL_BITAND;
         s->last = KL_BITAND;
         return;
       case '|':
         if (peek(s) == '|') {
           next(s);
-          t->type = KL_LOGOR;
+          h->type = KL_LOGOR;
           s->last = KL_LOGOR;
           return;
         }
-        t->type = KL_BITOR;
+        h->type = KL_BITOR;
         s->last = KL_BITOR;
         return;
       case '^':
-        t->type = KL_BITXOR;
+        h->type = KL_BITXOR;
         s->last = KL_BITXOR;
         return;
       case '~':
-        t->type = KL_BITNOT;
+        h->type = KL_BITNOT;
         s->last = KL_BITNOT;
         return;
       case '!':
         if (peek(s) == '=') {
           next(s);
-          t->type = KL_NEQ;
+          h->type = KL_NEQ;
           s->last = KL_NEQ;
           return;
         }
-        t->type = KL_LOGNOT;
+        h->type = KL_LOGNOT;
         s->last = KL_LOGNOT;
         return;
       case '(':
-        t->type = KL_LPAREN;
+        h->type = KL_LPAREN;
         s->last = KL_LPAREN;
         return;
       case ')':
-        t->type = KL_RPAREN;
+        h->type = KL_RPAREN;
         s->last = KL_RPAREN;
         return;
       default:
@@ -205,17 +205,17 @@ void kl_lexer_next(kl_lexer_t *s, kl_token_generic_t *token) {
 
           int kw = kl_lexer_keyword(buf, n);
           if (kw != KL_NONE) {
-            t->type = kw;
+            h->type = kw;
             s->last = kw;
             return;
           }
 
-          kl_token_str_t* stoken = (kl_token_str_t*)token;
+          kl_token_str_t* stoken = &token->str;
           if (n > KL_TOKEN_STRLEN) {
             s->error("Variable name exceeds maximum length!");
             return;
           }
-          stoken->token.type = KL_LOCAL;
+          stoken->header.type = KL_LOCAL;
           memcpy(stoken->str, buf, n);
 
           s->last            = KL_LOCAL;
@@ -275,7 +275,7 @@ static void kl_lexer_number(kl_lexer_t *source, kl_token_num_t *token, char* buf
     }
   }
 
-  token->token.type = KL_NUMBER;
+  token->header.type = KL_NUMBER;
   token->val        = number;
 }
 

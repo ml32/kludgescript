@@ -114,19 +114,19 @@ kl_expression_t* kl_parse(kl_lexer_t* source) {
 }
 
 static int kl_build_expr_list(kl_lexer_t* source, list_t* elist) {
-  kl_token_generic_t token;
-  kl_expression_t*   expr;
+  kl_token_t token;
+  kl_expression_t *expr;
   for (;;) {
     kl_lexer_next(source, &token);
-    if (token.token.type == KL_NONE) {
-      kl_parse_error("Invalid token or unexpected EOF", token.token.line);
+    if (token.header.type == KL_NONE) {
+      kl_parse_error("Invalid token or unexpected EOF", token.header.line);
       return -1;
     }
-    if (token.token.type == KL_END) break;
+    if (token.header.type == KL_END) break;
 
-    expr = kl_expr_from_token(&token.token);
+    expr = kl_expr_from_token(&token);
     if (expr == NULL) {
-      kl_parse_error("Expression contains unrecognised token", token.token.line);
+      kl_parse_error("Expression contains unrecognised token", token.header.line);
       return -1;
     }
 
@@ -327,11 +327,13 @@ void kl_expr_free(kl_expression_t *expr) {
 }
 
 static kl_expression_t* kl_expr_from_token(kl_token_t *token) {
-  if (token->type & KL_FLAG_BINOP) {
+  kl_token_header_t *header = &token->header;
+
+  if (header->type & KL_FLAG_BINOP) {
     kl_expr_binop_t* bexpr = (kl_expr_binop_t*) malloc(sizeof(kl_expr_binop_t));
 
-    bexpr->expr.type = token->type;
-    bexpr->expr.line = token->line;
+    bexpr->expr.type = header->type;
+    bexpr->expr.line = header->line;
 
     bexpr->args[0] = NULL;
     bexpr->args[1] = NULL;
@@ -339,36 +341,36 @@ static kl_expression_t* kl_expr_from_token(kl_token_t *token) {
     return (kl_expression_t*)bexpr;
   }
 
-  if (token->type & KL_FLAG_UNOP) {
+  if (header->type & KL_FLAG_UNOP) {
     kl_expr_unop_t* uexpr = (kl_expr_unop_t*) malloc(sizeof(kl_expr_unop_t));
 
-    uexpr->expr.type = token->type;
-    uexpr->expr.line = token->line;
+    uexpr->expr.type = header->type;
+    uexpr->expr.line = header->line;
 
     uexpr->arg = NULL;
 
     return (kl_expression_t*)uexpr;
   }
 
-  if (token->type == KL_PRINT) {
+  if (header->type == KL_PRINT) {
     kl_expr_print_t* pexpr = (kl_expr_print_t*) malloc(sizeof(kl_expr_print_t));
 
-    pexpr->expr.type = token->type;
-    pexpr->expr.line = token->line;
+    pexpr->expr.type = header->type;
+    pexpr->expr.line = header->line;
 
     pexpr->arg = NULL;
 
     return (kl_expression_t*)pexpr;
   }
 
-  if (token->type & KL_FLAG_VAR) {
-    kl_token_str_t* stoken = (kl_token_str_t*)token;
+  if (header->type & KL_FLAG_VAR) {
+    kl_token_str_t *stoken = &token->str;
     int n = stoken->n;
 
-    kl_expr_var_t* vexpr = (kl_expr_var_t*) malloc(sizeof(kl_expr_var_t) + n);
+    kl_expr_var_t *vexpr = (kl_expr_var_t*) malloc(sizeof(kl_expr_var_t) + n);
 
-    vexpr->expr.type = token->type;
-    vexpr->expr.line = token->line;
+    vexpr->expr.type = header->type;
+    vexpr->expr.line = header->line;
 
     vexpr->n = stoken->n;
     strncpy(vexpr->name, stoken->str, n);
@@ -376,13 +378,13 @@ static kl_expression_t* kl_expr_from_token(kl_token_t *token) {
     return (kl_expression_t*)vexpr;
   }
 
-  if (token->type == KL_NUMBER) {
-    kl_token_num_t* ntoken = (kl_token_num_t*)token;
+  if (header->type == KL_NUMBER) {
+    kl_token_num_t *ntoken = &token->num;
 
-    kl_expr_imm_t* iexpr = (kl_expr_imm_t*) malloc(sizeof(kl_expr_imm_t));
+    kl_expr_imm_t *iexpr = (kl_expr_imm_t*) malloc(sizeof(kl_expr_imm_t));
 
-    iexpr->expr.type = token->type;
-    iexpr->expr.line = token->line;
+    iexpr->expr.type = header->type;
+    iexpr->expr.line = header->line;
 
     iexpr->val = ntoken->val;
 
@@ -390,8 +392,8 @@ static kl_expression_t* kl_expr_from_token(kl_token_t *token) {
   }
 
   kl_expression_t* expr = (kl_expression_t*)malloc(sizeof(kl_expression_t));
-  expr->type = token->type;
-  expr->line = token->line;
+  expr->type = header->type;
+  expr->line = header->line;
   return expr;
 }
 

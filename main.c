@@ -50,6 +50,7 @@ int main() {
   kl_code_t*       code;
   for (;;) {
     code = kl_compile(&source);
+    if (code == NULL) continue;
     kl_code_print(code);
     kl_vm_exec(&vm, code);
     printf("sp: %d\n", vm.sp);

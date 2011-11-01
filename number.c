@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "trigtable.h"
+#include "logtable.h"
 
 /* FIXME: detect overflow in conversions */
 
@@ -73,6 +74,31 @@ kl_number_t kl_num_sin(kl_number_t theta) {
   kl_number_t n = sine_values[i];
 
   return s ? -n : n;
+}
+
+kl_number_t kl_num_lb(kl_number_t x) {
+  int n = 0;
+  kl_number_t w = x;
+  for (int i = sizeof(kl_number_t) * 8 / 2; i >= 0; i--) {
+    if (w >= 1 << i) { w >>= i; n += i; }
+  }
+  n -= KL_NUM_FBITS;
+
+  kl_number_t r = n < 0 ? KL_NUM_ONE >> -n : KL_NUM_ONE << n;
+
+  kl_number_t y = kl_num_div(x, r);
+
+  /* ten most signficant fractional bits used for course lookup */
+  int i = (y >> (KL_NUM_FBITS - 10)) & 0x3FF;
+  kl_number_t z0 = lb_values[i];
+  kl_number_t z1 = lb_values[i+1];
+
+  /* least significant bits used for linear interpolation */
+  kl_number_t u = ((y << 10) & KL_NUM_FMASK);
+
+  kl_number_t z = kl_num_mul(z1, u) + kl_num_mul(z0, KL_NUM_ONE - u);
+
+  return kl_inttonum(n) + z;
 }
 
 /* taylor series expansion for sine (expensive!) */

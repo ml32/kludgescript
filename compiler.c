@@ -17,6 +17,9 @@ static int precedence(int op) {
     case KL_LOGNOT:
     case KL_SINE:
     case KL_COSINE:
+    case KL_LOG_E:
+    case KL_LOG_2:
+    case KL_LOG_10:
       return 7;
     case KL_MUL:
     case KL_DIV:

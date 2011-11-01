@@ -171,6 +171,27 @@ static inline kl_valref_t kl_vm_cos(kl_valref_t x) {
   return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
 }
 
+static inline kl_valref_t kl_vm_lb(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_num_lb(x.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_ln(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_num_ln(x.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_lg(kl_valref_t x) {
+  if (x.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_num_lg(x.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
 
 static inline kl_valref_t kl_vm_eq(kl_valref_t x, kl_valref_t y) {
   if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
@@ -210,6 +231,13 @@ static inline kl_valref_t kl_vm_leq(kl_valref_t x, kl_valref_t y) {
 static inline kl_valref_t kl_vm_geq(kl_valref_t x, kl_valref_t y) {
   if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
     return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num >= y.val.num) };
+  }
+  return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
+}
+
+static inline kl_valref_t kl_vm_cmp(kl_valref_t x, kl_valref_t y) {
+  if (x.ns == KL_NS_IMMEDIATE && y.ns == KL_NS_IMMEDIATE) {
+    return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = kl_inttonum(x.val.num < y.val.num ? -1 : x.val.num > y.val.num ? 1 : 0) };
   }
   return (kl_valref_t){ .ns = KL_NS_IMMEDIATE, .val.num = 0 };
 }
@@ -296,6 +324,15 @@ void kl_vm_exec(kl_vm_t* vm, kl_code_t* code) {
       case KL_COSINE:
         KL_VM_UNOP(kl_vm_cos)
         break;
+      case KL_LOG_2:
+        KL_VM_UNOP(kl_vm_lb);
+        break;
+      case KL_LOG_E:
+        KL_VM_UNOP(kl_vm_ln);
+        break;
+      case KL_LOG_10:
+        KL_VM_UNOP(kl_vm_lg);
+        break;
 
       case KL_EQ:
         KL_VM_BINOP(kl_vm_eq)
@@ -314,6 +351,9 @@ void kl_vm_exec(kl_vm_t* vm, kl_code_t* code) {
         break;
       case KL_GEQ:
         KL_VM_BINOP(kl_vm_geq)
+        break;
+      case KL_CMP:
+        KL_VM_BINOP(kl_vm_cmp)
         break;
 
       case KL_PUSH:

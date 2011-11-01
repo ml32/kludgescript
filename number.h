@@ -14,6 +14,9 @@ typedef int32_t kl_number_t;
 #define KL_NUM_TENTH  0x0000199A
 #define KL_NUM_PI     0x0003243F
 #define KL_NUM_HALFPI (KL_NUM_PI >> 1)
+#define KL_NUM_E      0x0002b7e1
+#define KL_NUM_LB_E   0x00017154 /* base-2 logarithm of 'e' */
+#define KL_NUM_LB_TEN 0x00035269
 
 kl_number_t kl_strtoinum(char *str, int n); /* integer part */
 kl_number_t kl_strtofnum(char *str, int n); /* fractional part, no sign allowed */
@@ -57,5 +60,13 @@ static inline kl_number_t kl_num_cos(kl_number_t theta) {
   return kl_num_sin(KL_NUM_HALFPI - theta);
 }
 kl_number_t kl_num_taylor_sin(kl_number_t x);
+
+kl_number_t kl_num_lb(kl_number_t x);
+static inline kl_number_t kl_num_ln(kl_number_t x) {
+  return kl_num_div(kl_num_lb(x), KL_NUM_LB_E);
+}
+static inline kl_number_t kl_num_lg(kl_number_t x) {
+  return kl_num_div(kl_num_lb(x), KL_NUM_LB_TEN);
+}
 
 #endif

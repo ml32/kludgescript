@@ -283,6 +283,9 @@ static int kl_lexer_keyword(char *buf, int n) {
   if (strncmp(buf, "print", n) == 0) { return KL_PRINT; }
   if (strncmp(buf, "sin", n) == 0) { return KL_SINE; }
   if (strncmp(buf, "cos", n) == 0) { return KL_COSINE; }
+  if (strncmp(buf, "ln", n) == 0) { return KL_LOG_E; }
+  if (strncmp(buf, "lb", n) == 0) { return KL_LOG_2; }
+  if (strncmp(buf, "lg", n) == 0) { return KL_LOG_10; }
   return KL_NONE;
 }
 static void kl_lexer_error(char *msg) {

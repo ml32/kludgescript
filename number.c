@@ -29,16 +29,18 @@ kl_number_t kl_strtoinum(char *str, int n) {
 }
 
 kl_number_t kl_strtofnum(char *str, int n) {
-  kl_number_t result = kl_inttonum(0);
-  kl_number_t value  = KL_NUM_TENTH;
+  kl_number_t result  = 0;
+  kl_number_t divisor = 1;
+
   int digit;
-  for (int i=0; i<n; i++) {
-    digit   = str[i] - '0';
+  for (int i=0; i < n; i++) {
+    digit    = str[i] - '0';
     assert(digit >= 0 && digit <= 9);
-    result += kl_num_mul(kl_inttonum(digit), value);
-    value   = kl_num_mul(value, KL_NUM_TENTH);
+    result   = kl_num_mul(result, kl_inttonum(10));
+    result  += digit;
+    divisor  = kl_num_mul(divisor, kl_inttonum(10));
   }
-  return result;
+  return kl_num_div(result, divisor);
 }
 
 kl_number_t kl_strtonum(char *str, int n) {
